@@ -12,7 +12,7 @@ new class extends Component
     {
         $logout();
 
-        $this->redirect('/', navigate: true);
+        $this->redirect(route('login'), navigate: true);
     }
 }; ?>
 
@@ -22,9 +22,10 @@ new class extends Component
         <div class="flex justify-between h-16">
             <div class="flex">
                 <!-- Logo -->
-                <div class="shrink-0 flex items-center">
-                    <a href="{{ route('dashboard') }}" wire:navigate>
-                        <x-application-logo class="block h-9 w-auto fill-current text-gray-800" />
+                <div class="shrink-0 flex items-center gap-2">
+                    <a href="{{ route('dashboard') }}" wire:navigate class="flex items-center gap-2">
+                        <x-application-logo class="block h-9 w-auto fill-current text-indigo-600" />
+                        <span class="hidden sm:inline text-sm font-semibold text-gray-800">{{ config('app.name') }}</span>
                     </a>
                 </div>
 
@@ -32,6 +33,9 @@ new class extends Component
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" wire:navigate>
                         {{ __('Dashboard') }}
+                    </x-nav-link>
+                    <x-nav-link :href="route('forms.index')" :active="request()->routeIs('forms.*')" wire:navigate>
+                        {{ __('Forms') }}
                     </x-nav-link>
                 </div>
             </div>
@@ -83,6 +87,9 @@ new class extends Component
         <div class="pt-2 pb-3 space-y-1">
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" wire:navigate>
                 {{ __('Dashboard') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('forms.index')" :active="request()->routeIs('forms.*')" wire:navigate>
+                {{ __('Forms') }}
             </x-responsive-nav-link>
         </div>
 
