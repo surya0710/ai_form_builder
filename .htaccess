@@ -1,0 +1,42 @@
+<IfModule mod_rewrite.c>
+    <IfModule mod_negotiation.c>
+        Options -MultiViews -Indexes
+    </IfModule>
+
+    RewriteEngine On
+
+    # If the app lives in a subdirectory (e.g. example.com/ai-form-builder/),
+    # uncomment and set the path:
+    # RewriteBase /ai-form-builder/
+
+    # Block direct web access to sensitive Laravel paths and files
+    RewriteRule ^(app|bootstrap|config|database|resources|routes|storage|tests|vendor)(/|$) - [F,L,NC]
+    RewriteRule ^(\.env|composer\.(json|lock)|artisan|phpunit\.xml|phpunit\.xml\.dist)(/|$) - [F,L,NC]
+
+    # Pass Authorization header through (Sanctum / API tokens)
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Pass X-XSRF-Token header through
+    RewriteCond %{HTTP:x-xsrf-token} .
+    RewriteRule .* - [E=HTTP_X_XSRF_TOKEN:%{HTTP:X-XSRF-Token}]
+
+    # Send all other requests into the Laravel public/ front controller
+    RewriteCond %{REQUEST_URI} !/public/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
+# Prefer Apache 2.4 syntax; fall back for older hosts
+<IfModule mod_authz_core.c>
+    <FilesMatch "(^\.env|composer\.(json|lock)|artisan|phpunit\.xml(\.dist)?)$">
+        Require all denied
+    </FilesMatch>
+</IfModule>
+<IfModule !mod_authz_core.c>
+    <FilesMatch "(^\.env|composer\.(json|lock)|artisan|phpunit\.xml(\.dist)?)$">
+        Order allow,deny
+        Deny from all
+    </FilesMatch>
+</IfModule>
+
+Options -Indexes
