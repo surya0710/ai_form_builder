@@ -102,10 +102,22 @@ class ResponseParser
                 'type' => $type,
                 'is_required' => $isRequired,
                 'sort_order' => $index,
+                'step' => max(1, (int) ($field['step'] ?? 1)),
                 'validation_rules' => $isRequired ? ['required'] : [],
                 'placeholder' => is_string($field['placeholder'] ?? null) ? $field['placeholder'] : null,
                 'help_text' => is_string($field['help_text'] ?? null) ? $field['help_text'] : null,
+                'settings' => is_array($field['settings'] ?? null) ? $field['settings'] : [],
             ];
+
+            if (isset($field['validation_rules']) && is_array($field['validation_rules'])) {
+                $normalizedField['validation_rules'] = array_values(array_filter(array_map(
+                    static fn ($rule) => is_string($rule) ? trim($rule) : '',
+                    $field['validation_rules']
+                )));
+                if ($isRequired && ! in_array('required', $normalizedField['validation_rules'], true)) {
+                    array_unshift($normalizedField['validation_rules'], 'required');
+                }
+            }
 
             if (in_array($type, [...$optionTypes, 'checkbox'], true)) {
                 $normalizedField['field_options'] = $this->normalizeOptions($field['options'] ?? null, $type);

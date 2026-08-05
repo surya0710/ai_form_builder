@@ -15,6 +15,10 @@ return [
 
     'default' => env('AI_PROVIDER', 'openai'),
 
+    'retry' => [
+        'max_attempts' => (int) env('AI_PARSE_RETRY_ATTEMPTS', 3),
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | AI Providers

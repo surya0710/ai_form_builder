@@ -61,7 +61,8 @@ class FormBuilderFeatureTest extends TestCase
             ->get(route('forms.builder', $form))
             ->assertOk()
             ->assertSee('Publish')
-            ->assertSee('Fields save automatically');
+            ->assertSee('Field palette')
+            ->assertSee('Esc collapses');
 
         \Livewire\Livewire::test(\App\Livewire\Builder\Builder::class, ['form' => $form])
             ->call('publishForm')
@@ -134,18 +135,15 @@ class FormBuilderFeatureTest extends TestCase
 
         \Livewire\Livewire::actingAs($user)
             ->test(\App\Livewire\Builder\Builder::class, ['form' => $form])
-            ->call('editField', $field->id)
-            ->assertSet('editor.type', 'phone')
-            ->set('editor.label', 'Phone Number')
-            ->set('editor.placeholder', '+1 555 0100')
-            ->call('saveField')
-            ->assertHasNoErrors()
-            ->assertSet('statusMessage', 'Field settings saved.');
+            ->call('updateInline', $field->id, 'label', 'Phone Number')
+            ->call('updateInline', $field->id, 'placeholder', '+1 555 0100')
+            ->assertSet('statusMessage', 'Field updated.');
 
         $this->assertDatabaseHas('form_fields', [
             'id' => $field->id,
             'label' => 'Phone Number',
             'type' => 'phone',
+            'placeholder' => '+1 555 0100',
         ]);
     }
 

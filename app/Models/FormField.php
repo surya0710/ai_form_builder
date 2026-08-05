@@ -12,7 +12,10 @@ class FormField extends Model
 {
     use HasUuids;
 
-    protected $fillable = ['form_id', 'label', 'name', 'type', 'placeholder', 'help_text', 'default_value', 'validation_rules', 'field_options', 'is_required', 'sort_order', 'settings'];
+    protected $fillable = [
+        'form_id', 'label', 'name', 'type', 'placeholder', 'help_text', 'default_value',
+        'validation_rules', 'field_options', 'is_required', 'sort_order', 'step', 'settings',
+    ];
 
     public function uniqueIds(): array
     {

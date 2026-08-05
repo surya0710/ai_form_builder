@@ -32,23 +32,50 @@ Manual creation, AI generation, and document import all share the same persisten
 
 | Area | What you get |
 |------|----------------|
-| Builder | Drag-friendly field list, types, validation, reorder |
-| AI | Prompt → structured form + fields, logged attempts |
+| Builder | Drag & drop, inline edit, duplicate, sections, multi-step, rating, JSON schema |
+| AI | Queued generation, edit-with-AI, retry on invalid JSON, generation logs |
 | Import | Word/Excel upload, preview, then builder |
-| Public | Shareable `/f/{uuid}` + success page |
+| Public | Shareable `/f/{uuid}`, multi-step, rating stars, success page |
+| Submissions | List, search, view, delete, CSV export |
 | API | Versioned `/api/v1` with Sanctum + Postman collection |
+
+## AI prompt strategy
+
+| Item | Detail |
+|------|--------|
+| System / builder role | Deterministic instructions via `PromptBuilder` (generate + edit modes) |
+| JSON contract | `{ title, description?, fields: [{ label, type, required?, options?, step?, validation_rules? }] }` |
+| Supported types | From `config/forms.php` / `FieldType` (includes `section`, `rating`) |
+| Unsupported types | Normalized to `text` by `ResponseParser` |
+| Temperature | `AI_TEMPERATURE` (default `0.2`) |
+| Model | `OPENAI_MODEL` (default `gpt-4o-mini`) |
+| Retry | Up to `AI_PARSE_RETRY_ATTEMPTS` (default `3`) when JSON/schema is invalid |
+| Fallback | Friendly error: “Unable to generate form. Please try again.” |
+| Queue | `GenerateAiFormJob` / `EditAiFormJob` — statuses: `queued` → `generating` → `completed` / `failed` |
+| Logs | `ai_generation_logs`: prompt, model, tokens, latency_ms, status, mode (`generate`/`edit`) |
+
+## Database indexes
+
+| Table | Indexes |
+|-------|---------|
+| `forms` | `uuid` unique, `slug` unique, `user_id` FK, `status` |
+| `form_fields` | `uuid` unique, `(form_id, name)` unique, `(form_id, sort_order)`, `(form_id, step, sort_order)`, `type` |
+| `form_submissions` | `uuid` unique, `form_id` FK, `submitted_at` |
+| `submission_answers` | `(submission_id, field_id)` unique, FKs on `submission_id` / `field_id` |
 
 ## Features
 
-- Dynamic field types (text, email, select, radio, checkbox, file, and more)
-- Livewire dashboard, builder, and public form renderer
-- AI form generation with provider abstraction and generation logs
+- Dynamic field types including **section** headings and **rating** (★)
+- Drag-and-drop builder with live persistence, inline edits, and field duplication
+- JSON schema editor with two-way sync and validation
+- Multi-step public forms (Previous / Next / Submit)
+- AI form generation (queued) and AI editing inside the builder (also queued)
 - Word (`.docx`) and Excel (`.xlsx`) import with preview UI
 - REST API (`/api/v1`) with standardized JSON envelopes
-- Public form URLs and submission success flow
+- Submission management + CSV export
 - Policies, Sanctum tokens, rate limits on generate/import
 - Seeded demo account, sample forms, and submissions
-- Login-first landing (no default Laravel welcome page)
+- Shared-hosting root `.htaccess` for `public/` routing
 
 ## Architecture overview
 
@@ -241,20 +268,18 @@ Checklist:
 4. Build assets: `npm ci && npm run build`.
 5. Run `php artisan migrate --force`, `php artisan storage:link`, `php artisan optimize`.
 6. Ensure the web root is `public/`, and `storage/` + `bootstrap/cache/` are writable.
-7. Configure a queue worker if you enable queued jobs later.
+7. Run a queue worker for AI generation: `php artisan queue:work` (UI uses queued jobs; `sync` is fine for simple hosts).
 8. Confirm file uploads and import size limits match host limits (`client_max_body_size` / PHP `upload_max_filesize`).
 
 Full guide: [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md). After deploy, update this README with the **Live demo** URL and publish the GitHub repository.
 
 ## Future improvements
 
-- In-dashboard AI prompt UI (API already exists)
 - Additional AI providers (Gemini, Claude, Azure OpenAI)
-- Async AI/import jobs with progress polling
-- Conditional field logic and multi-page forms
-- Export submissions to CSV/Excel
+- Conditional field logic
 - Team workspaces and role-based access
 - Webhooks on new submissions
+- Real-time broadcast for AI job progress (beyond polling)
 
 ## Documentation index
 

@@ -123,7 +123,7 @@ class AiGenerateFormUiTest extends TestCase
         $this->assertDatabaseCount('forms', 0);
         $this->assertDatabaseHas('ai_generation_logs', [
             'user_id' => $user->id,
-            'status' => 'success',
+            'status' => 'completed',
             'prompt' => 'Create an employee onboarding form',
         ]);
     }
