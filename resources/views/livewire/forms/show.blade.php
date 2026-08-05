@@ -30,6 +30,9 @@
             <a class="px-3 py-2 text-sm border-2 border-indigo-600 text-indigo-700 font-semibold rounded-md hover:bg-indigo-50" href="{{ route('forms.edit', $form) }}">
                 Edit details
             </a>
+            <a class="px-3 py-2 text-sm border-2 border-gray-300 text-gray-700 font-semibold rounded-md hover:bg-gray-50" href="{{ route('forms.submissions', $form) }}" wire:navigate>
+                Submissions
+            </a>
 
             @if ($form->status !== \App\Enums\FormStatus::Published)
                 <button type="button" wire:click="publishForm" class="px-3 py-2 text-sm bg-green-600 text-white font-semibold border-2 border-green-800 rounded-md shadow-sm hover:bg-green-700">

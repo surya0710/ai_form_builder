@@ -23,13 +23,30 @@ class PromptBuilder
     }
 
     /**
+     * Build a prompt to edit an existing form schema.
+     */
+    public function buildEdit(string $currentSchemaJson, string $userInstruction): string
+    {
+        $supportedTypes = implode(', ', $this->supportedFieldTypes());
+
+        return implode("\n\n", [
+            'You are a form editing assistant. Update the existing form JSON according to the user instruction.',
+            'Current form schema JSON:'."\n".$currentSchemaJson,
+            'User instruction: '.$userInstruction,
+            'Supported field types: '.$supportedTypes.'. Use only these types. If a requested type does not match, use text.',
+            'Return the full updated form JSON using this schema:'."\n".$this->jsonSchema(),
+            'Output constraints:'."\n".$this->outputConstraints()."\n8. Preserve field names when editing existing fields unless renaming is requested.\n9. Preserve step numbers when present; default new fields to step 1.\n10. section fields are headings only; rating fields store an integer score.",
+        ]);
+    }
+
+    /**
      * @return list<string>
      */
     protected function supportedFieldTypes(): array
     {
         return config('forms.supported_field_types', [
             'text', 'textarea', 'email', 'number', 'phone', 'url', 'date', 'datetime',
-            'checkbox', 'radio', 'select', 'file', 'password',
+            'checkbox', 'radio', 'select', 'file', 'password', 'section', 'rating',
         ]);
     }
 

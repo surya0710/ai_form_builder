@@ -2,7 +2,8 @@
 
 namespace App\Livewire\Forms;
 
-use App\Exceptions\AI\AIException;
+use App\Jobs\GenerateAiFormJob;
+use App\Models\AiGenerationLog;
 use App\Models\Form;
 use App\Services\AI\AIService;
 use Illuminate\Contracts\View\View;
@@ -25,6 +26,10 @@ class GenerateForm extends Component
 
     public bool $generating = false;
 
+    public ?int $jobLogId = null;
+
+    public string $queueStatus = '';
+
     /** @var list<string> */
     public array $examples = [
         'Employee Feedback Form',
@@ -42,7 +47,7 @@ class GenerateForm extends Component
         $this->errorMessage = null;
     }
 
-    public function generate(AIService $ai): void
+    public function generate(): void
     {
         Gate::authorize('create', Form::class);
 
@@ -58,23 +63,55 @@ class GenerateForm extends Component
         $this->errorMessage = null;
         $this->preview = null;
 
-        try {
-            $this->preview = $ai->generatePreview(auth()->user(), $this->prompt);
+        $providerName = (string) config('ai.default');
+        $log = AiGenerationLog::query()->create([
+            'user_id' => auth()->id(),
+            'prompt' => $this->prompt,
+            'provider' => $providerName,
+            'model' => config("ai.providers.{$providerName}.model"),
+            'status' => 'queued',
+            'mode' => 'generate',
+            'generated_at' => now(),
+        ]);
+
+        $this->jobLogId = $log->id;
+        $this->queueStatus = 'queued';
+
+        GenerateAiFormJob::dispatch($log->id, (int) auth()->id(), $this->prompt, false);
+        $this->pollJob();
+    }
+
+    public function pollJob(): void
+    {
+        if (! $this->jobLogId) {
+            return;
+        }
+
+        $log = AiGenerationLog::query()->find($this->jobLogId);
+        if (! $log) {
+            return;
+        }
+
+        $this->queueStatus = $log->status;
+
+        if ($log->status === 'completed') {
+            $this->preview = $log->response['parsed'] ?? null;
             $this->step = 'preview';
-        } catch (AIException $e) {
-            $this->errorMessage = $e->publicMessage();
-            $this->step = 'prompt';
-        } catch (Throwable) {
-            $this->errorMessage = 'Something went wrong while generating your form. Please try again.';
-            $this->step = 'prompt';
-        } finally {
             $this->generating = false;
+            $this->jobLogId = null;
+        }
+
+        if ($log->status === 'failed') {
+            $this->errorMessage = $log->error_message ?: 'Unable to generate form. Please try again.';
+            $this->step = 'prompt';
+            $this->generating = false;
+            $this->jobLogId = null;
         }
     }
 
-    public function regenerate(AIService $ai): void
+    public function regenerate(): void
     {
-        $this->generate($ai);
+        $this->generate();
     }
 
     public function saveForm(AIService $ai)
@@ -103,7 +140,7 @@ class GenerateForm extends Component
 
     public function resetPrompt(): void
     {
-        $this->reset(['preview', 'errorMessage', 'generating']);
+        $this->reset(['preview', 'errorMessage', 'generating', 'jobLogId', 'queueStatus']);
         $this->step = 'prompt';
     }
 

@@ -11,12 +11,15 @@ class AiGenerationLog extends Model
 
     protected $fillable = [
         'user_id',
+        'form_id',
         'prompt',
         'provider',
         'model',
         'response',
         'tokens',
+        'latency_ms',
         'status',
+        'mode',
         'error_message',
         'generated_at',
     ];
@@ -32,5 +35,10 @@ class AiGenerationLog extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function form(): BelongsTo
+    {
+        return $this->belongsTo(Form::class);
     }
 }

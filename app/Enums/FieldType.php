@@ -17,4 +17,16 @@ enum FieldType: string
     case DateTime = 'datetime';
     case File = 'file';
     case Url = 'url';
+    case Section = 'section';
+    case Rating = 'rating';
+
+    public function isInput(): bool
+    {
+        return $this !== self::Section;
+    }
+
+    public function hasOptions(): bool
+    {
+        return in_array($this, [self::Select, self::Radio, self::Checkbox], true);
+    }
 }

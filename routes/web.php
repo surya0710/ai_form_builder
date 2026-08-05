@@ -9,6 +9,8 @@ use App\Livewire\Forms\GenerateForm;
 use App\Livewire\Forms\Import;
 use App\Livewire\Forms\Index;
 use App\Livewire\Forms\Show;
+use App\Livewire\Forms\SubmissionShow;
+use App\Livewire\Forms\Submissions;
 use App\Livewire\Public\FormRenderer;
 use Illuminate\Support\Facades\Route;
 
@@ -25,6 +27,8 @@ Route::middleware('auth')->group(function (): void {
     Route::put('/forms/{form}', [FormController::class, 'update'])->name('forms.update');
     Route::delete('/forms/{form}', [FormController::class, 'destroy'])->name('forms.destroy');
     Route::get('/forms/{form}/builder', Builder::class)->name('forms.builder');
+    Route::get('/forms/{form}/submissions', Submissions::class)->name('forms.submissions');
+    Route::get('/forms/{form}/submissions/{submission}', SubmissionShow::class)->name('forms.submissions.show');
     Route::post('/forms/{form}/publish', [FormController::class, 'publish'])->name('forms.publish');
     Route::post('/forms/{form}/archive', [FormController::class, 'archive'])->name('forms.archive');
 });

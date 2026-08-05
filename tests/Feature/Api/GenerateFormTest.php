@@ -13,10 +13,10 @@ class GenerateFormTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function mockProvider(callable $generate): MockInterface
+    private function mockProvider(callable $generate, int $times = 1): MockInterface
     {
-        return $this->mock(AIProviderInterface::class, function (MockInterface $mock) use ($generate): void {
-            $mock->shouldReceive('generate')->once()->andReturnUsing($generate);
+        return $this->mock(AIProviderInterface::class, function (MockInterface $mock) use ($generate, $times): void {
+            $mock->shouldReceive('generate')->times($times)->andReturnUsing($generate);
         });
     }
 
@@ -65,7 +65,7 @@ class GenerateFormTest extends TestCase
 
         $this->assertDatabaseHas('ai_generation_logs', [
             'user_id' => $user->id,
-            'status' => 'success',
+            'status' => 'completed',
             'prompt' => 'Create a test form',
             'model' => 'gpt-4o-mini',
         ]);
@@ -80,7 +80,7 @@ class GenerateFormTest extends TestCase
             'content' => 'This is not JSON',
             'tokens' => 5,
             'model' => 'gpt-4o-mini',
-        ]);
+        ], times: 3);
 
         $response = $this->withToken($token)->postJson('/api/v1/forms/generate', [
             'prompt' => 'Create a test form',
@@ -242,7 +242,7 @@ class GenerateFormTest extends TestCase
             'content' => json_encode(['title' => '', 'fields' => []]),
             'tokens' => 3,
             'model' => 'gpt-4o-mini',
-        ]);
+        ], times: 3);
 
         $response = $this->withToken($token)->postJson('/api/v1/forms/generate', [
             'prompt' => 'Create a test form',
